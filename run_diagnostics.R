@@ -53,6 +53,7 @@ for(i in seq_along(all_grids)) {
 # -------------------------------------------------------------------------
 # 2) Run retrospective analysis (in parallel):
 # You can adapt this part and do it as you prefer.
+# IMPORANT: This might take a while, run it overnight or over a weekend
 
 # Create retro folders:
 all_retro_dir = NULL
@@ -65,9 +66,11 @@ for(i in seq_along(all_grids)) {
 nSim = length(all_retro_dir)
 
 # Specify number of cores:
+# If you do not how many available cores you have, then run:
+# detectCores()
 # WARNING: I recommend to use max 80% of your total number of cores
 # NEVER use all of them
-nCores = 2
+nCores = 6
 cl = makeCluster(nCores)
 registerDoSNOW(cl)
 
@@ -157,7 +160,8 @@ for(i in seq_along(all_grids)) {
   
   # Trends in recdevs (process error):
   # See: 10.1016/j.fishres.2022.106478
-  ltest = funtimes::notrend_test(x = i_mod$recruit$dev[!is.na(i_mod$recruit$dev)])
+  rec_vec = i_mod$recruit %>% dplyr::filter(era == 'Main') %>% na.omit
+  ltest = funtimes::notrend_test(x = rec_vec$dev)
   i_test7 = data.frame(species = sel_sp, modname = all_grids[i]) 
   i_test7$pval = ltest$p.value
   
