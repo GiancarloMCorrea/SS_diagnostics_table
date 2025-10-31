@@ -1,8 +1,19 @@
 ---
 title: "Diagnostic table"
-author: "Giancarlo M. Correa"
-format: docx
+author: "Indian Ocean bigeye tuna 2025"
+format: 
+  html:
+    toc: true
+engine: knitr
+fig-dpi: 400
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      verbose = FALSE,
+                      message = FALSE, 
+                      warning = FALSE)
+```
 
 ```{r}
 #| echo: false
@@ -11,31 +22,34 @@ format: docx
 require(knitr)
 require(kableExtra)
 require(dplyr)
+require(gt)
 require(tibble)
+require(png)
+require(magick)
 ```
 
 ```{r}
 #| echo: false
 #| message: false
 #| warning: false
-# Species initial:
-sel_sp = 'YFT'
 
 # Output folder:
-output_folder = 'C:/Use/OneDrive - AZTI/Assessment_models/ICCAT/2024/YFT/diagnostics'
+output_folder = 'C:/Use/OneDrive - AZTI/Assessment_models/IOTC/2025/BET/diagnostics_LS'
 
 # Read outputs:
-load(file.path(output_folder, sel_sp, 'test0.RData')) # Convergence 
-load(file.path(output_folder, sel_sp, 'test1.RData')) # Residual diagnostics CPUE
-load(file.path(output_folder, sel_sp, 'test2.RData')) # Residual diagnostics ML
-load(file.path(output_folder, sel_sp, 'test3.RData')) # RMSE CPUE
-load(file.path(output_folder, sel_sp, 'test4.RData')) # RMSE ML
-load(file.path(output_folder, sel_sp, 'test5.RData')) # MASE CPUE
-load(file.path(output_folder, sel_sp, 'test6.RData')) # Mohn rho
-load(file.path(output_folder, sel_sp, 'test7.RData')) # Trend recdevs
+convergence = readRDS(file.path(output_folder, 'convergence.rds'))
+run_test_index = readRDS(file.path(output_folder, 'run_test_index.rds'))
+run_test_len = readRDS(file.path(output_folder, 'run_test_len.rds'))
+rmse_index = readRDS(file.path(output_folder, 'rmse_index.rds'))
+rmse_len = readRDS(file.path(output_folder, 'rmse_len.rds'))
+mase_index = readRDS(file.path(output_folder, 'mase_index.rds'))
+retro_df = readRDS(file.path(output_folder, 'retrospective.rds'))
+recdev_df = readRDS(file.path(output_folder, 'recdev_trend.rds'))
 ```
 
-## Diagnostic table
+# Summary table
+
+## Table 1
 
 ```{r}
 #| label: tbl-diag1
@@ -46,26 +60,26 @@ load(file.path(output_folder, sel_sp, 'test7.RData')) # Trend recdevs
 #| warning: false
 
 # Output data frame:
-out_df = data.frame(modname = all_t0$modname, n_pars = all_t0$n_pars,
-                    max_grad = all_t0$max_grad, hessian = all_t0$hessian_inv,
-                    tot_nll = all_t0$tot_nll, n_pars_bounds = all_t0$n_pars_bounds)
+out_df = data.frame(modname = convergence$modname, n_pars = convergence$n_pars,
+                    max_grad = convergence$max_grad, hessian = convergence$hessian_inv,
+                    tot_nll = convergence$tot_nll, n_pars_bounds = convergence$n_pars_bounds)
 out_df = out_df %>% mutate(max_grad = ifelse(test = max_grad < 1e-04, 
-                                             yes = '< 1e-04', no = '>= 1e-04'))
+                                             yes = '< 1e-04', no = round(max_grad, digits = 4)))
 
 # Mohn rho SSB
-out_t6 = all_t6 %>% filter(peel == 'Combined', type == 'SSB') %>% select(modname, Rho) %>%
+out_t6 = retro_df %>% filter(peel == 'Combined', type == 'SSB') %>% select(modname, Rho) %>%
          rename('Rho_ssb' = 'Rho')
 out_t6 = out_t6 %>% mutate(Rho_ssb = round(Rho_ssb, digits = 2))
 out_df = left_join(x = out_df, y = out_t6, by = 'modname')
 
 # Mohn rho F
-out_t6 = all_t6 %>% filter(peel == 'Combined', type == 'F') %>% select(modname, Rho) %>%
+out_t6 = retro_df %>% filter(peel == 'Combined', type == 'F') %>% select(modname, Rho) %>%
           rename('Rho_f' = 'Rho')
 out_t6 = out_t6 %>% mutate(Rho_f = round(Rho_f, digits = 2))
 out_df = left_join(x = out_df, y = out_t6, by = 'modname')
 
 # Trends:
-out_t7 = all_t7 %>% select(modname, pval)
+out_t7 = recdev_df %>% select(modname, pval)
 out_t7 = out_t7 %>% mutate(pval = ifelse(test = pval < 0.05, yes = TRUE, no = FALSE))
 out_df = left_join(x = out_df, y = out_t7, by = 'modname')
 
@@ -74,12 +88,12 @@ colnames(out_df) = c('Model', 'No. pars', 'Max gradient', 'Hessian invertible?',
                      'NLL', 'No. pars on bounds', 'Mohn rho SSB', 'Mohn rho F', 
                      'Trend in recdevs?')
 
-out_df %>% kable
+out_df %>% gt 
 
 # Once the table is created, you will probably want to change the layout and decrease the font size. Do that on Word.
 ```
 
-{{< pagebreak >}}
+## Table 2
 
 ```{r}
 #| label: tbl-diag2
@@ -90,28 +104,28 @@ out_df %>% kable
 #| warning: false
 
 # Runtest CPUE:
-out_t1 = all_t1 %>% dplyr::select(modname, Index, type, test)
+out_t1 = run_test_index %>% dplyr::select(modname, Index, type, test)
 colnames(out_t1) = c('Model', 'Fleet', 'Type', 'Run test')
 
 # RMSE CPUE:
-out_t3 = all_t3 %>% dplyr::select(modname, indices, RMSE.perc)
+out_t3 = rmse_index %>% dplyr::select(modname, indices, RMSE.perc)
 out_t3 = out_t3 %>% mutate(type = 'cpue')
 colnames(out_t3) = c('Model', 'Fleet', 'RMSE', 'Type')
 out_df2 = left_join(x = out_t1, y = out_t3, by = c('Model', 'Fleet', 'Type'))
 
 # MASE CPUE:
-out_t5 = all_t5 %>% select(modname, Index, MASE)
+out_t5 = mase_index %>% select(modname, Index, MASE)
 out_t5 = out_t5 %>% mutate(MASE = round(MASE, digits = 2), type = 'cpue')
 colnames(out_t5) = c('Model', 'Fleet', 'MASE', 'Type')
 out_df2 = left_join(x = out_df2, y = out_t5, by = c('Model', 'Fleet', 'Type'))
 
 
 # Runtest ML:
-out_t2 = all_t2 %>% dplyr::select(modname, Index, type, test)
+out_t2 = run_test_len %>% dplyr::select(modname, Index, type, test)
 colnames(out_t2) = c('Model', 'Fleet', 'Type', 'Run test')
 
 # RMSE ML:
-out_t4 = all_t4 %>% dplyr::select(modname, indices, RMSE.perc)
+out_t4 = rmse_len %>% dplyr::select(modname, indices, RMSE.perc)
 out_t4 = out_t4 %>% mutate(type = 'len')
 colnames(out_t4) = c('Model', 'Fleet', 'RMSE', 'Type')
 out_df3 = left_join(x = out_t2, y = out_t4, by = c('Model', 'Fleet', 'Type'))
@@ -120,7 +134,71 @@ out_df3 = left_join(x = out_t2, y = out_t4, by = c('Model', 'Fleet', 'Type'))
 out_df3$MASE = NA # TODO check if it works
 
 merged_out_df = rbind(out_df2, out_df3)
-merged_out_df %>% kable
+merged_out_df %>% gt %>% opt_interactive(
+    use_search = FALSE,
+    use_filters = TRUE,
+    use_pagination = FALSE
+  )
 
 # Once the table is created, you will probably want to change the layout and decrease the font size. Do that on Word. 
 ```
+
+# Figures
+
+<!-- ## Jitter analysis -->
+
+<!-- ```{r} -->
+<!-- #| out-width: "90%" -->
+<!-- knitr::include_graphics(file.path(output_folder, "jitter-like.png")) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- #| out-width: "90%" -->
+<!-- knitr::include_graphics(file.path(output_folder, "jitter-ssb.png")) -->
+<!-- ``` -->
+
+## Retrospective analysis
+
+### SSB
+
+```{r}
+#| out-width: "90%"
+knitr::include_graphics(file.path(output_folder, "retro_SSB.png"))
+```
+
+### Fishing mortality
+
+```{r}
+#| out-width: "90%"
+knitr::include_graphics(file.path(output_folder, "retro_F.png"))
+```
+
+### Recruitment
+
+```{r}
+#| out-width: "90%"
+knitr::include_graphics(file.path(output_folder, "retro_compare9_recruits.png"))
+```
+
+### Biomass ratio
+
+```{r}
+#| out-width: "90%"
+knitr::include_graphics(file.path(output_folder, "retro_compare3_Bratio.png"))
+```
+
+<!-- ## Likelihood profiles -->
+
+<!-- ### Unfished recruitment -->
+
+<!-- ```{r} -->
+<!-- #| out-width: "90%" -->
+<!-- knitr::include_graphics(file.path(output_folder, "profile_plot_likelihood_R0.png")) -->
+<!-- ``` -->
+
+<!-- ### Natural mortality -->
+
+<!-- ```{r} -->
+<!-- #| out-width: "90%" -->
+<!-- knitr::include_graphics(file.path(output_folder, "profile_plot_likelihood_NatM.png")) -->
+<!-- ``` -->
