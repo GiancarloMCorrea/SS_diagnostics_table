@@ -7,8 +7,7 @@ source('code/0_set_params.R')
 # par_vec = round(seq(from = 8, to = 11, length.out = n_cores), digits = 3)
 
 this_par = 'NatM'
-par_vec = round(seq(from = 0.2, to = 0.45, length.out = 10), digits = 3)
-nCores = min(n_cores, length(par_vec))
+par_vec = round(seq(from = 0.2, to = 0.45, length.out = n_cores), digits = 3)
 
 for(i in seq_along(all_grids)) {
   
@@ -31,7 +30,7 @@ for(i in seq_along(all_grids)) {
   starter[["parmtrace"]] = 0
   SS_writestarter(starter, dir = dir_prof, overwrite = TRUE)
   
-  future::plan(future::multisession, workers = nCores)
+  future::plan(future::multisession, workers = n_cores)
   prof.table <- profile(
     dir = dir_prof,
     oldctlfile = "control.ss",
@@ -55,33 +54,38 @@ for(i in seq_along(all_grids)) {
   # Get directory:
   dir_prof = file.path(grid_folder, all_grids[i], paste0("profile_", this_par))
   
-  # Get outputs:
-  profilemodels <- SSgetoutput(
-    dirvec = dir_prof,
-    keyvec = 1:length(par_vec), getcovar = FALSE
-  )
-
-  # Add original model:
-  MLEmodel = SS_output(dir = file.path(grid_folder, all_grids[i]), verbose = FALSE, printstats = FALSE)
-  profilemodels[["MLE"]] <- MLEmodel
+  if(dir.exists(dir_prof)) {
+      
+    # Get outputs:
+    profilemodels <- SSgetoutput(
+      dirvec = dir_prof,
+      keyvec = 1:length(par_vec), getcovar = FALSE
+    )
   
-  # Get summary
-  profilesummary <- SSsummarize(profilemodels)
-  
-  # plot profile using summary created above
-  results <- SSplotProfile(profilesummary,
-                           profile.string = this_par, 
-                           profile.label = this_par,
-                           plotdir = file.path(output_folder, all_grids[i]),
-                           print = TRUE) 
-  save_res[[i]] = results %>% mutate(species = sel_sp, modname = all_grids[i])
-  
-  # Change name of png file created:
-  file.rename(from = file.path(output_folder, all_grids[i], 'profile_plot_likelihood.png'),
-              to = file.path(output_folder, all_grids[i], paste0('profile_plot_likelihood_', this_par, '.png')))
-  
+    # Add original model:
+    MLEmodel = SS_output(dir = file.path(grid_folder, all_grids[i]), verbose = FALSE, printstats = FALSE)
+    profilemodels[["MLE"]] <- MLEmodel
+    
+    # Get summary
+    profilesummary <- SSsummarize(profilemodels)
+    
+    # plot profile using summary created above
+    results <- SSplotProfile(profilesummary,
+                             main = all_grids[i],
+                             ymax = 500, # play with this to improve your plots
+                             profile.string = this_par, 
+                             profile.label = this_par,
+                             plotdir = file.path(output_folder, all_grids[i]),
+                             print = TRUE) 
+    save_res[[i]] = results %>% mutate(species = sel_sp, modname = all_grids[i])
+    
+    # Change name of png file created:
+    file.rename(from = file.path(output_folder, all_grids[i], 'profile_plot_likelihood.png'),
+                to = file.path(output_folder, all_grids[i], paste0('profile_plot_likelihood_', this_par, '.png')))
+    
   # Make summary time series:
   # SSplotComparisons(profilesummary, legendlabels = paste(this_par, "=", par_vec))
+  }
   
   print(i)
 }

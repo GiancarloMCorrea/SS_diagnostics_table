@@ -9,6 +9,8 @@ rm(list = ls())
 require(ss3diags)
 require(r4ss)
 require(dplyr)
+require(png)
+require(tidyr)
 require(doSNOW)
 require(parallel)
 require(funtimes)
@@ -27,7 +29,7 @@ ss_exe = 'ss.exe'
 ts_model = 'quarter' # quarter or year
 
 # Folder where diagnostics results will be saved:
-output_folder = 'C:/Use/OneDrive - AZTI/Assessment_models/IOTC/2025/BET/diagnostics_LS'
+output_folder = 'C:/Use/OneDrive - AZTI/Assessment_models/IOTC/2025/BET/diagnostics'
 dir.create(output_folder, showWarnings = FALSE, recursive = TRUE)
 
 # SS model grid folder

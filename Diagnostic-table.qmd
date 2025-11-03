@@ -6,6 +6,7 @@ format:
     toc: true
 engine: knitr
 fig-dpi: 400
+embed-resources: true
 ---
 
 ```{r setup, include=FALSE}
@@ -24,6 +25,7 @@ require(kableExtra)
 require(dplyr)
 require(gt)
 require(tibble)
+require(tidyr)
 require(png)
 require(magick)
 ```
@@ -34,7 +36,7 @@ require(magick)
 #| warning: false
 
 # Output folder:
-output_folder = 'C:/Use/OneDrive - AZTI/Assessment_models/IOTC/2025/BET/diagnostics_LS'
+output_folder = 'C:/Use/OneDrive - AZTI/Assessment_models/IOTC/2025/BET/diagnostics_final'
 
 # Read outputs:
 convergence = readRDS(file.path(output_folder, 'convergence.rds'))
@@ -67,15 +69,8 @@ out_df = out_df %>% mutate(max_grad = ifelse(test = max_grad < 1e-04,
                                              yes = '< 1e-04', no = round(max_grad, digits = 4)))
 
 # Mohn rho SSB
-out_t6 = retro_df %>% filter(peel == 'Combined', type == 'SSB') %>% select(modname, Rho) %>%
-         rename('Rho_ssb' = 'Rho')
-out_t6 = out_t6 %>% mutate(Rho_ssb = round(Rho_ssb, digits = 2))
-out_df = left_join(x = out_df, y = out_t6, by = 'modname')
-
-# Mohn rho F
-out_t6 = retro_df %>% filter(peel == 'Combined', type == 'F') %>% select(modname, Rho) %>%
-          rename('Rho_f' = 'Rho')
-out_t6 = out_t6 %>% mutate(Rho_f = round(Rho_f, digits = 2))
+out_t6 = retro_df %>% mutate(Rho = round(Rho, digits = 2)) %>% select(-species) %>% 
+  pivot_wider(names_from = type, values_from = Rho, names_prefix = 'Rho_')
 out_df = left_join(x = out_df, y = out_t6, by = 'modname')
 
 # Trends:
@@ -85,10 +80,12 @@ out_df = left_join(x = out_df, y = out_t7, by = 'modname')
 
 # Column names:
 colnames(out_df) = c('Model', 'No. pars', 'Max gradient', 'Hessian invertible?',
-                     'NLL', 'No. pars on bounds', 'Mohn rho SSB', 'Mohn rho F', 
+                     'NLL', 'No. pars on bounds', 'Mohn rho SSB', 'Mohn rho F',
+                     'Mohn rho Rec', 'Mohn rho Bratio',
                      'Trend in recdevs?')
 
-out_df %>% gt 
+out_df %>% gt
+# out_df %>% kable
 
 # Once the table is created, you will probably want to change the layout and decrease the font size. Do that on Word.
 ```
@@ -134,6 +131,7 @@ out_df3 = left_join(x = out_t2, y = out_t4, by = c('Model', 'Fleet', 'Type'))
 out_df3$MASE = NA # TODO check if it works
 
 merged_out_df = rbind(out_df2, out_df3)
+# merged_out_df %>% kable
 merged_out_df %>% gt %>% opt_interactive(
     use_search = FALSE,
     use_filters = TRUE,
@@ -143,7 +141,7 @@ merged_out_df %>% gt %>% opt_interactive(
 # Once the table is created, you will probably want to change the layout and decrease the font size. Do that on Word. 
 ```
 
-# Figures
+<!-- # Figures -->
 
 <!-- ## Jitter analysis -->
 
@@ -157,35 +155,35 @@ merged_out_df %>% gt %>% opt_interactive(
 <!-- knitr::include_graphics(file.path(output_folder, "jitter-ssb.png")) -->
 <!-- ``` -->
 
-## Retrospective analysis
+<!-- ## Retrospective analysis -->
 
-### SSB
+<!-- ### SSB -->
 
-```{r}
-#| out-width: "90%"
-knitr::include_graphics(file.path(output_folder, "retro_SSB.png"))
-```
+<!-- ```{r} -->
+<!-- #| out-width: "90%" -->
+<!-- knitr::include_graphics(file.path(output_folder, "retro_SSB.png")) -->
+<!-- ``` -->
 
-### Fishing mortality
+<!-- ### Fishing mortality -->
 
-```{r}
-#| out-width: "90%"
-knitr::include_graphics(file.path(output_folder, "retro_F.png"))
-```
+<!-- ```{r} -->
+<!-- #| out-width: "90%" -->
+<!-- knitr::include_graphics(file.path(output_folder, "retro_F.png")) -->
+<!-- ``` -->
 
-### Recruitment
+<!-- ### Recruitment -->
 
-```{r}
-#| out-width: "90%"
-knitr::include_graphics(file.path(output_folder, "retro_compare9_recruits.png"))
-```
+<!-- ```{r} -->
+<!-- #| out-width: "90%" -->
+<!-- knitr::include_graphics(file.path(output_folder, "retro_compare9_recruits.png")) -->
+<!-- ``` -->
 
-### Biomass ratio
+<!-- ### Biomass ratio -->
 
-```{r}
-#| out-width: "90%"
-knitr::include_graphics(file.path(output_folder, "retro_compare3_Bratio.png"))
-```
+<!-- ```{r} -->
+<!-- #| out-width: "90%" -->
+<!-- knitr::include_graphics(file.path(output_folder, "retro_compare3_Bratio.png")) -->
+<!-- ``` -->
 
 <!-- ## Likelihood profiles -->
 
@@ -200,5 +198,6 @@ knitr::include_graphics(file.path(output_folder, "retro_compare3_Bratio.png"))
 
 <!-- ```{r} -->
 <!-- #| out-width: "90%" -->
-<!-- knitr::include_graphics(file.path(output_folder, "profile_plot_likelihood_NatM.png")) -->
+<!-- #| fig-cap: "6d_PSshort_MLorHam6Qest model" -->
+<!-- knitr::include_graphics(file.path(output_folder, "6d_PSshort_MLorHam6Qest", "profile_plot_likelihood_NatM.png")) -->
 <!-- ``` -->

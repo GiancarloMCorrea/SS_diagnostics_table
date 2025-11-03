@@ -45,7 +45,8 @@ for(i in seq_along(all_grids)) {
               plotdir = file.path(output_folder, all_grids[i]), endyrvec = yrvec,
               legendlabels = yrlab)
   # Plot Bratio and R retro:
-  SSplotComparisons(retros, endyrvec = yrvec, new = FALSE, legendlabels = yrlab, subplots = 3, 
+  SSplotComparisons(retros, endyrvec = yrvec, new = FALSE, legendlabels = yrlab, subplots = 3,
+                    btarg = 0, minbthresh	=0,
                     plotdir = file.path(output_folder, all_grids[i]), print = TRUE, filenameprefix="retro_")
   SSplotComparisons(retros, endyrvec = yrvec, new = FALSE, legendlabels = yrlab, subplots = 9,
                     plotdir = file.path(output_folder, all_grids[i]), print = TRUE, filenameprefix="retro_")
