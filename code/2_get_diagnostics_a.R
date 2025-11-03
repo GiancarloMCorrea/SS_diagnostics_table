@@ -8,6 +8,7 @@ save_t2 = list() # Residual diagnostics mean length
 save_t3 = list() # RMSE CPUE
 save_t4 = list() # RMSE mean length
 save_t7 = list() # Trend in recdevs
+save_t7b = list() # Rec devs for plotting
 for(i in seq_along(all_grids)) {
   
   # Create folder to save images:
@@ -57,6 +58,10 @@ for(i in seq_along(all_grids)) {
   i_test7 = data.frame(species = sel_sp, modname = all_grids[i]) 
   i_test7$pval = ltest$p.value
   
+  # Save rec devs:
+  i_test7b = data.frame(Yr = rec_vec$Yr, dev = rec_vec$dev,
+                        species = sel_sp, modname = all_grids[i]) 
+  
   # Save all test:
   save_t0[[i]] = i_test0
   save_t1[[i]] = i_test1
@@ -64,6 +69,7 @@ for(i in seq_along(all_grids)) {
   save_t3[[i]] = i_test3
   save_t4[[i]] = i_test4
   save_t7[[i]] = i_test7
+  save_t7b[[i]] = i_test7b
   
   print(i)
   
@@ -76,3 +82,23 @@ saveRDS(dplyr::bind_rows(save_t2), file = file.path(output_folder, 'run_test_len
 saveRDS(dplyr::bind_rows(save_t3), file = file.path(output_folder, 'rmse_index.rds'))
 saveRDS(dplyr::bind_rows(save_t4), file = file.path(output_folder, 'rmse_len.rds'))
 saveRDS(dplyr::bind_rows(save_t7), file = file.path(output_folder, 'recdev_trend.rds'))
+saveRDS(dplyr::bind_rows(save_t7b), file = file.path(output_folder, 'recdev_trend_df.rds'))
+
+# -------------------------------------------------------------------------
+
+
+# Plot recdevs time series
+save_t7b = readRDS(file.path(output_folder, 'recdev_trend_df.rds'))
+plot_data = save_t7b
+
+p1 = ggplot(data = plot_data, aes(x = Yr, y = dev)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() + ylab('Recruitment deviates') +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        legend.position = 'bottom') +
+  facet_wrap(~ modname)
+ggsave(filename = file.path(output_folder, 'rec_devs.png'), plot = p1, 
+       width = 200, height = 220, units = 'mm', dpi = 400)

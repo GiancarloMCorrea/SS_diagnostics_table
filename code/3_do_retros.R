@@ -16,7 +16,7 @@ for(i in seq_along(all_grids)) {
             overwrite = TRUE, recursive = FALSE, 
             copy.mode = TRUE)
   # Copy files for -1 to n_peels
-  i_retro_dir = create_retro_files(dir = file.path(grid_folder, all_grids[i]), years = -1:n_peels, mod_ts = "quarter")
+  i_retro_dir = create_retro_files(dir = file.path(grid_folder, all_grids[i]), years = -1:n_peels, mod_ts = ts_model)
   all_retro_dir = c(all_retro_dir, i_retro_dir)
 }
 

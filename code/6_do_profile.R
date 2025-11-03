@@ -27,6 +27,8 @@ for(i in seq_along(all_grids)) {
   starter[["ctlfile"]] <- "control_modified.ss"
   starter[["prior_like"]] <- 1
   starter[["init_values_src"]] = 0
+  starter[["jitter_fraction"]] = 0
+  starter[["parmtrace"]] = 0
   SS_writestarter(starter, dir = dir_prof, overwrite = TRUE)
   
   future::plan(future::multisession, workers = nCores)

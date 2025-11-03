@@ -33,8 +33,10 @@ for(i in seq_along(all_grids)) {
   # TODO: check if it works
   
   # Monhn rho, retrospective analysis (model consistency):
-  i_test6 = rbind(ss3diags::SShcbias(retros, quants = 'SSB', endyrvec = yrvec),
-                  ss3diags::SShcbias(retros, quants = 'F', endyrvec = yrvec))
+  rho_est = r4ss::SSmohnsrho(summaryoutput = retros, endyrvec = yrvec)
+  i_test6 = data.frame(type = c('SSB', 'F', 'Rec', 'Bratio'), 
+                       Rho = c(rho_est$AFSC_Hurtado_SSB, rho_est$AFSC_Hurtado_F,
+                               rho_est$AFSC_Hurtado_Rec, rho_est$AFSC_Hurtado_Bratio))
   i_test6 = i_test6 %>% mutate(species = sel_sp, modname = all_grids[i])
   SSplotRetro(summaryoutput = retros, subplots = 'SSB', print = TRUE, 
               plotdir = file.path(output_folder, all_grids[i]), endyrvec = yrvec,
@@ -42,12 +44,11 @@ for(i in seq_along(all_grids)) {
   SSplotRetro(summaryoutput = retros, subplots = 'F', print = TRUE, 
               plotdir = file.path(output_folder, all_grids[i]), endyrvec = yrvec,
               legendlabels = yrlab)
-  # Plot R retro:
+  # Plot Bratio and R retro:
   SSplotComparisons(retros, endyrvec = yrvec, new = FALSE, legendlabels = yrlab, subplots = 3, 
                     plotdir = file.path(output_folder, all_grids[i]), print = TRUE, filenameprefix="retro_")
   SSplotComparisons(retros, endyrvec = yrvec, new = FALSE, legendlabels = yrlab, subplots = 9,
                     plotdir = file.path(output_folder, all_grids[i]), print = TRUE, filenameprefix="retro_")
-  
   
   # Save all test:
   save_t5[[i]] = i_test5
