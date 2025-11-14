@@ -23,7 +23,7 @@ for(i in seq_along(all_grids)) {
   retros = SSsummarize(retroModels)
   
   # MASE (prediction skill):
-  i_test5 = ss3diags::SSmase(retros, quants = 'cpue')
+  i_test5 = ss3diags::SSmase(retros, endyrvec = yrvec, quants = 'cpue')
   i_test5 = i_test5 %>% mutate(species = sel_sp, modname = all_grids[i])
   ss3diags::SSplotHCxval(retroSummary = retros, subplots = 'cpue', print = TRUE, 
                          plotdir = file.path(output_folder, all_grids[i]), filenameprefix = 'cpue',

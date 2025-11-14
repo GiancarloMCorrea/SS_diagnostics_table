@@ -5,11 +5,11 @@ require(r4ss)
 
 # Folder where your models are saved:
 # Each subfolder is a different model configuration
-grid_folder = 'C:/Use/OneDrive - AZTI/Assessment_models/IOTC/2025/UpdatedGridBET2025'
+grid_folder = 'C:/Use/OneDrive - AZTI/General - IOTC_YFT_2024/models/FinalGrid'
 
 # Folder where the SS inputs will be saved:
 # Subfolders with model configurations will be created
-new_grid_folder = 'C:/Use/OneDrive - AZTI/Assessment_models/IOTC/2025/Grid_OnlyInputs'
+new_grid_folder = 'C:/Use/OneDrive - AZTI/Codes/YFT-Assessment-CPUE-update-2025/models_2024'
 dir.create(new_grid_folder, showWarnings = FALSE, recursive = FALSE)
 
 # Copy only input files:

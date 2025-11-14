@@ -85,20 +85,22 @@ saveRDS(dplyr::bind_rows(save_t7), file = file.path(output_folder, 'recdev_trend
 saveRDS(dplyr::bind_rows(save_t7b), file = file.path(output_folder, 'recdev_trend_df.rds'))
 
 # -------------------------------------------------------------------------
-
-
-# Plot recdevs time series
+# Plot rec dev trends:
+save_t7 = readRDS(file.path(output_folder, 'recdev_trend.rds'))
 save_t7b = readRDS(file.path(output_folder, 'recdev_trend_df.rds'))
-plot_data = save_t7b
+plot_data = left_join(save_t7b, save_t7, by = c('species', 'modname'))
+plot_data = plot_data %>% mutate(trend = if_else(pval<0.05, TRUE, FALSE))
 
 p1 = ggplot(data = plot_data, aes(x = Yr, y = dev)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +
+  geom_point(aes(color = trend)) +
+  geom_smooth(method = "lm", se = FALSE, color = 'black') +
   theme_bw() + ylab('Recruitment deviates') +
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank(),
+        strip.text = element_text(size = 8.5),
         legend.position = 'bottom') +
   facet_wrap(~ modname)
 ggsave(filename = file.path(output_folder, 'rec_devs.png'), plot = p1, 
-       width = 200, height = 220, units = 'mm', dpi = 400)
+       width = 200, height = 150, units = 'mm', dpi = 400)
+
